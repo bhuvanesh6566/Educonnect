@@ -2,11 +2,6 @@ import os
 import google.generativeai as genai
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from dotenv import load_dotenv
-from pathlib import Path
-
-# Load .env from backend root regardless of where uvicorn is launched from
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 API_KEY = os.getenv("GEMINI_API_KEY", "")
 genai.configure(api_key=API_KEY)
