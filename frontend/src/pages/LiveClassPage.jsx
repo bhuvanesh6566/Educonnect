@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { io } from "socket.io-client";
 import { Video, VideoOff, Mic, MicOff, Monitor, PhoneOff, Users } from "lucide-react";
 
-const SIGNALING = "http://localhost:3001";
+const SIGNALING = import.meta.env.VITE_SIGNALING_URL || "http://localhost:3001";
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 export default function LiveClassPage() {
