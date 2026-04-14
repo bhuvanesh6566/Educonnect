@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mic, MicOff, X, Loader } from "lucide-react";
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const NAV_COMMANDS = [
   { keywords: ["open chat", "go to chat", "one on one", "direct message"], route: "/chat", reply: "Opening 1-on-1 chat." },
