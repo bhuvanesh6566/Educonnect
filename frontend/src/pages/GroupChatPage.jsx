@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { useGroupChat } from "../hooks/useChat";
+import { useGroupChat, usePresence, useTyping, useOtherTyping } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/config";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { Send, Plus } from "lucide-react";
+
+function formatTime(ts) {
+  if (!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function Ticks({ status, isMine }) {
+  if (!isMine) return null;
+  if (!status || status === "sending") return <span className="tick">✓</span>;
+  if (status === "sent") return <span className="tick tick-sent">✓✓</span>;
+  return null;
+}
 
 export default function GroupChatPage() {
   const { user, profile } = useAuth();
@@ -14,6 +27,14 @@ export default function GroupChatPage() {
   const [text, setText] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const bottomRef = useRef();
+  const typingTimeout = useRef();
+
+  usePresence(user?.uid);
+  const chatId = selected ? `group_${selected.id}` : null;
+  const setTyping = useTyping(user?.uid, chatId);
+
+  // collect typing users from group members (simplified: show if anyone is typing)
+  const [typingUsers, setTypingUsers] = useState([]);
 
   const fetchGroups = () =>
     getDocs(collection(db, "groups")).then((snap) =>
@@ -35,8 +56,16 @@ export default function GroupChatPage() {
 
   const handleSend = async () => {
     if (!text.trim() || !selected) return;
+    setTyping(false);
     await send(text.trim(), user.uid, profile?.name);
     setText("");
+  };
+
+  const handleTyping = (e) => {
+    setText(e.target.value);
+    setTyping(true);
+    clearTimeout(typingTimeout.current);
+    typingTimeout.current = setTimeout(() => setTyping(false), 1500);
   };
 
   const selectGroup = (g) => { setSelected(g); setShowChat(true); };
@@ -63,19 +92,27 @@ export default function GroupChatPage() {
           <>
             <div className="chat-header">
               <button className="back-btn" onClick={() => setShowChat(false)}>←</button>
-              <strong>🏫 {selected.name}</strong>
+              <div className="avatar">🏫</div>
+              <div>
+                <strong>{selected.name}</strong>
+                <div className="presence-status online">Group Chat</div>
+              </div>
             </div>
             <div className="messages">
               {messages.map((m) => (
                 <div key={m.id} className={`message ${m.senderUid === user.uid ? "mine" : "theirs"}`}>
                   <div className="bubble">{m.text}</div>
-                  <div className="msg-name">{m.senderName}</div>
+                  <div className="msg-meta">
+                    <span className="msg-name">{m.senderName}</span>
+                    <span className="msg-time">{formatTime(m.createdAt)}</span>
+                    <Ticks status={m.status} isMine={m.senderUid === user.uid} />
+                  </div>
                 </div>
               ))}
               <div ref={bottomRef} />
             </div>
             <div className="input-row">
-              <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="Message classroom..." />
+              <input value={text} onChange={handleTyping} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="Message classroom..." />
               <button onClick={handleSend}><Send size={18} /></button>
             </div>
           </>
