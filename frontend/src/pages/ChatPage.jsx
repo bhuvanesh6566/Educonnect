@@ -9,6 +9,7 @@ export default function ChatPage() {
   const { user, profile } = useAuth();
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showChat, setShowChat] = useState(false);
   const { messages, send } = usePrivateChat(user?.uid, selected?.uid);
   const [text, setText] = useState("");
   const bottomRef = useRef();
@@ -29,12 +30,14 @@ export default function ChatPage() {
     setText("");
   };
 
+  const selectUser = (u) => { setSelected(u); setShowChat(true); };
+
   return (
     <div className="chat-layout">
-      <div className="user-list">
+      <div className={`user-list ${showChat ? "mobile-hidden" : ""}`}>
         <h3>💬 Contacts</h3>
         {users.map((u) => (
-          <div key={u.uid} className={`user-item ${selected?.uid === u.uid ? "active" : ""}`} onClick={() => setSelected(u)}>
+          <div key={u.uid} className={`user-item ${selected?.uid === u.uid ? "active" : ""}`} onClick={() => selectUser(u)}>
             <div className="avatar">{u.name[0].toUpperCase()}</div>
             <div>
               <div className="user-name">{u.name}</div>
@@ -43,10 +46,11 @@ export default function ChatPage() {
           </div>
         ))}
       </div>
-      <div className="chat-window">
+      <div className={`chat-window ${!showChat ? "mobile-hidden" : ""}`}>
         {selected ? (
           <>
             <div className="chat-header">
+              <button className="back-btn" onClick={() => setShowChat(false)}>←</button>
               <div className="avatar">{selected.name[0].toUpperCase()}</div>
               <div>
                 <strong>{selected.name}</strong>

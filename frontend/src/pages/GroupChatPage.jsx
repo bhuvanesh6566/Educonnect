@@ -9,6 +9,7 @@ export default function GroupChatPage() {
   const { user, profile } = useAuth();
   const [groups, setGroups] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showChat, setShowChat] = useState(false);
   const { messages, send } = useGroupChat(selected?.id);
   const [text, setText] = useState("");
   const [newGroup, setNewGroup] = useState("");
@@ -38,9 +39,11 @@ export default function GroupChatPage() {
     setText("");
   };
 
+  const selectGroup = (g) => { setSelected(g); setShowChat(true); };
+
   return (
     <div className="chat-layout">
-      <div className="user-list">
+      <div className={`user-list ${showChat ? "mobile-hidden" : ""}`}>
         <h3>👥 Classrooms</h3>
         {profile?.role === "teacher" && (
           <div className="create-group">
@@ -49,16 +52,19 @@ export default function GroupChatPage() {
           </div>
         )}
         {groups.map((g) => (
-          <div key={g.id} className={`user-item ${selected?.id === g.id ? "active" : ""}`} onClick={() => setSelected(g)}>
+          <div key={g.id} className={`user-item ${selected?.id === g.id ? "active" : ""}`} onClick={() => selectGroup(g)}>
             <div className="avatar">🏫</div>
             <div className="user-name">{g.name}</div>
           </div>
         ))}
       </div>
-      <div className="chat-window">
+      <div className={`chat-window ${!showChat ? "mobile-hidden" : ""}`}>
         {selected ? (
           <>
-            <div className="chat-header"><strong>🏫 {selected.name}</strong></div>
+            <div className="chat-header">
+              <button className="back-btn" onClick={() => setShowChat(false)}>←</button>
+              <strong>🏫 {selected.name}</strong>
+            </div>
             <div className="messages">
               {messages.map((m) => (
                 <div key={m.id} className={`message ${m.senderUid === user.uid ? "mine" : "theirs"}`}>
